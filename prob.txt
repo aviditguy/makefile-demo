@@ -1,0 +1,43 @@
+Strong Password Validator
+Test123!
+Abc@1234
+GoodPass@9
+weakpass
+NOLOWER1!
+noupper1!
+Short1!
+
+Email Addresses
+user@gmail.com
+user-name_21@mail.co.in
+john.doe@my-company.org
+a..b@gmail.com
+.bad@mail.com
+@nouser.com
+user@.com
+
+Indian Mobile Numbers
++91 9876543210
+6876543210
++91-8123456789
+918123456789
++91-4123456789
+1234567890
++91 5123456789
+
+Valid Dates
+29-02-2024
+30-04-2023
+31-12-2025
+31-11-2023
+29-02-2023
+00-01-2024
+15-13-2022
+
+IP Addresses
+192.168.1.1
+10.0.0.5
+0.0.0.0
+172.16.254.1
+256.1.1.1
+999.10.10.10

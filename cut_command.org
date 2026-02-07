@@ -1,0 +1,118 @@
+* *cut* command in Linux
+
+*cut* ek *text processing command* hai jo:
+kisi line ke specific *columns / characters / fields* ko extract karta hai.
+Ye each line ko independently process karta hai.
+
+*Simple Example:*
+#+begin_src shell
+echo "apple banana mango" | cut -c1-5
+#+end_src
+*Sirf characters 1-5 nakale*
+
++ *Basic Syntax*:
+#+begin_src shell
+cut OPTION... [FILE]
+
+cat file | cut OPTION
+#+end_src
+
+*cut* ke 3 Main Modes
+*cut* 3 tareeke se kaam karta hai:
+
+| *Mode*           | *Option* | *Use*                    |
+|----------------+--------+------------------------|
+| *Character mode* | *-c*     | character positions    |
+| *Byte mode*      | *-b*     | byte positions         |
+| *Field mode*     | *-f*     | delimeter-based fields |
+
+** Character Mode (*-c*)
+Character positions ke basis par cut karta hai.
+- *-c1*            Single Character (1st character)
+- *-c1-5*          Range (characters 1-5)
+- *-c1-5,13-18*    Multiple ranges (characters 1-5 & 13-18)
+- *-c14-*          From position to end (characters 14-end)
+- *-c-5*           From start to position (characters 1-5)
+  
+#+begin_src shell
+echo "apple banana mango" | cut -c1
+echo "apple banana mango" | cut -c1-5
+echo "apple banana mango" | cut -c1-5,13-18
+echo "apple banana mango" | cut -c14-
+echo "apple banana mango" | cut -c-5
+#+end_src
+
+** Byte Mode (*-b*)
+Bytes ke positions ke basis par text cut karta hai.
+- characters nahi
+- bytes count hote hai
+
++ *ASCII*            1 char = 1 byte
++ *UTF-8 Unicode*    1 char = 1-4 bytes
+  
+#+begin_src shell
+echo "hello" | cut -b1
+echo "hello" | cut -b1-4
+
+echo "éclair" | cut -b1-2
+#+end_src
+
++ Use *-b* when: binary data, byte protocols, low-level parsing
++ Use *-c* when: human-readable text (Unicode-safe)
+
+** Field Mode (*-f*)
+Delimeter ke basis par data cut karta hai.
+*Default dlimiter = TAB*
+
+*** Custom delimiter (*-d*)
+#+begin_src shell
+echo -e "name:age:city
+rahul:22:delhi
+amit:25:mumbai" | cut -d: -f1
+
+echo -e "name:age:city
+rahul:22:delhi
+amit:25:mumbai" | cut -d: -f1,3
+
+echo -e "name:age:city
+rahul:22:delhi
+amit:25:mumbai" | cut -d: -f2-3
+#+end_src
+
+*** Suppress non-delimeted lines (*-s*)
+Normally agar line me delimeter nahi hai to wo bhi output me print hogi.
+*-s* se un lines ko output me nahi layenge
+
+#+begin_src shell
+echo -e "hello
+name:age:city" | cut -d: -f1
+
+echo -e "hello
+name:age:city" | cut -d: -f1 -s
+#+end_src
+
+*** Output delimeter (*--output-delimiter*)
+#+begin_src shell
+echo -e "name:age:city
+rahul:22:delhi
+amit:25:mumbai" | cut -d: -f2-3 --output-delimiter=" | "
+#+end_src
+
+** Practical Examples
++ *CSV data se specific column nikalna*
+#+begin_src shell
+echo -e "name,age,city
+rahul,22,delhi
+amit,25,mumbai" | cut -d, -f2
+#+end_src
+
++ *Username + shell extract karna*
+#+begin_src shell
+cut -d: -f1,7 /etc/passwd
+#+end_src
+
++ *Top shells count*
+Kaunsa shell kitni baar use ho raha hai
+#+begin_src shell
+cut -d: -f7 /etc/passwd | sort | uniq -c
+#+end_src

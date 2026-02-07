@@ -1,0 +1,203 @@
+* Emacs Process APIs
+Emacs basically OS processes ko 3 tareeke se handle karta hai:
+
+#+begin_src
+Synchronous (blocking)
+Async (non-blocking)
+Region-based filtering
+#+end_src
+
+
+** *call-process*
+*call-process* Emacs Lisp ka core primitive hai — jab tum *external program ko synchronously (block karke)* chalana chahte ho.
+- *“Emacs ke andar se OS ka koi program chalao, wait karo, output lo.”*
+
+*** Basic syntax
+#+begin_src
+(call-process PROGRAM INFILE BUFFER DISPLAY &rest ARGS)
+#+end_src
+
+| *Argument* | *Meaning*                                                 |
+|----------+---------------------------------------------------------|
+| *PROGRAM*  | Program ka naam ya full path ("*ls*", "*gcc*", "*/bin/date*") |
+| *INFILE*   | Input file ya *nil* (STDIN ke liye)                       |
+| *BUFFER*   | Output kahan jaye                                       |
+| *DISPLAY*  | Output ke baad buffer dikhe ya nahi                     |
+| *ARGS*     | Program ke arguments                                    |
+
+*BUFFER*
+- *"**buf**"                  named buffer
+- *t or (current-buffer)*    yahin insert
+- *nil*                      ignore output
+- *0*                        */dev/null*
+
+  #+begin_src emacs-lisp
+(call-process "ls" nil "*ls-out*" t "-l" "-a")
+(call-process "date" nil (current-buffer) t)
+(call-process "date" nil t t)
+
+;; Silent Command (no output)
+(call-process "mkdir" nil nil nil "demo-dir")
+(call-process "rmdir" nil nil nil "demo-dir")
+
+;; Discard output (/dev/null style)
+(call-process "ls" nil 0 nil)
+  #+end_src
+
+*DISPLAY*
+- *t*    Emacs ko allow karta hai buffer show karne ke liye (guaranteed nahi hai; depends on display-buffer rules)
+- *nil*  buffer show nahi hota hai automatically
+
+#+begin_src elisp
+(call-process "ls" nil "*ls-output*" nil)
+
+(let ((buf "*out*"))
+  (call-process "ls" nil buf nil)
+  (display-buffer buf))
+#+end_src
+
+*** Input from file (STDIN redirection)
+#+begin_src emacs-lisp
+(call-process "wc" "formatting.org" (current-buffer) t "-l")
+#+end_src
+
+*Equivalent to shell:*
+#+begin_src shell
+wc -l < formatting.org
+#+end_src
+
+*** call-process runs in *default-directory*
+#+begin_src emacs-lisp
+(call-process "pwd" nil t t)
+
+(let ((default-directory "/tmp/"))
+  (call-process "pwd" nil t t))
+#+end_src
+
+*** Capture exit code
+#+begin_src emacs-lisp
+(let ((status (call-process "grep" nil nil nil "hello" "formatting.org")))
+  (message "Exit code: %d" status))
+#+end_src
+
+*Return value*
+- 0    success
+- >0   program exit code
+- nil  program failed to start
+Ye scripting ke liye crucial hai.
+
+*** Shell vs call-process
+*call-process* shell use nahi karta.
+
+*❌ Ye nahi chalega:*
+#+begin_src emacs-lisp
+(call-process "ls *.c")
+#+end_src
+
+*✅ Ye chalega:*
+#+begin_src emacs-lisp
+(call-process "sh" nil t t "-c" "ls *.c")
+#+end_src
+
+*Reason:*
+- *call-process* shell expand nahi karta
+- **, |, >, &&* → shell features hain
+
+
+** *call-process-region*
+- Ye *call-process* ka bhai hai
+- *STDIN buffer ke region se aata hai*, file se nahi.
+
+*"Buffer ke selected text ko external program ko feed karo (STDIN), output wapas buffer me lo."*
+
+#+begin_src
+(call-process-region START END PROGRAM DELETE BUFFER DISPLAY &rest ARGS)
+#+end_src
+
+- *START / END*    Region ka start / end
+- *PROGRAM*        External program
+- *DELETE*         Region delete ho ya nahi
+- *BUFFER*         Output destination
+- *DISPLAY*        Output buffer show ho ya nahi
+- *ARGS*           argv
+
+*DELETE*
+- *nil*            Region rahe
+- *t* or *'region*   Region replace ho jaye output se
+  
+  #+begin_src emacs-lisp
+(call-process-region (point-min) (point-max) "wc" nil "*wc*" t "-l")
+(call-process-region (point-min) (point-max) "wc" 'region "*wc*" t "-l")
+  #+end_src
+
+*** Practical Example
+#+begin_src emacs-lisp
+(defun my/uppercase-region ()
+  (interactive)
+  (unless (use-region-p)
+    (user-error "No region selected"))
+  (call-process-region
+   (region-beginning) (region-end)
+   "tr" 'region (current-buffer) nil "a-z" "A-Z"))
+#+end_src
+
+#+begin_src
+AAA
+hello
+BBB
+#+end_src
+
+
+** *make-process*
+
+#+begin_src
+External program runs
+        ↓
+Emits stdout/stderr chunks
+        ↓
+Emacs receives output
+        ↓
+Filter processes chunks
+        ↓
+Sentinel fires when process state changes
+#+end_src
+
+- Emacs event-driven hai
+- Output streaming me aata hai (chunk-by-chunk)
+
+*** Basic Syntax
+#+begin_src emacs-lisp
+(make-process
+ :name "proc-name"                        → procss ka ID
+ :buffer "*output*"                       → output kahan jayega
+ :command '("program" "arg1" "arg2")      → kya run hoga
+ :filter (lambda (proc output) ...)       → output aate hi kya kare (ye fn call hoga)
+ :sentinel (lambda (proc )                  → process finish/exit pe kya hoga
+#+end_src
+
+*Minimal Example:*
+#+begin_src emacs-lisp
+(make-process
+ :name "ls"
+ :buffer "*ls*"
+ :command '("ls" "-l"))
+#+end_src
+
+- Async run
+- Output *ls* buffer me
+- Emacs block nahi hota
+
+  #+begin_src emacs-lisp
+(make-process
+ :name "demo"
+ :buffer "*demo*"
+ :command '("ping" "-c" "5" "google.com")
+
+ :filter
+ (lambda (_ out)
+   (message "LIVE: %s" out))
+
+ :sentinel
+ (lambda (_ e)
+   (message "Process ended: %s" e)))
+  #+end_src

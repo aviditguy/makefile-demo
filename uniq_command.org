@@ -1,0 +1,62 @@
+* uniq command in Linux
+
+*uniq removes adjacent duplicate lines only*.
+- *Input must be sorted* if you want to remove all duplicates globally.
+- *uniq* compares *current line with previous line only*.
+- So, in most practical use cases:
+
+  #+begin_src sh
+sort file.txt | uniq
+
+echo -e "two
+one
+one
+five" | sort | uniq
+#+end_src
+
+** Common Options
+
+| *Option* | *Description*                     |   | *Option* | *Description*                |
+|--------+---------------------------------+---+--------+----------------------------|
+| *-d*     | Show *only duplicate* lines       |   | *-u*     | Show *only unique* lines     |
+| *-c*     | *Count* occurrences of each line  |   | *-i*     | Ignore case when comparing |
+| *-f N*   | Ignore first N fields           |   | *-s N*   | Ignore first N characters  |
+| *-w N*   | Compare only first N characters |   |        |                            |
+
+** Examples
+
+#+begin_src
+1 orange
+2 orange
+aaKiwi
+apple
+apple
+Apple
+banana
+banana
+bbKiwi
+mango123
+mango456
+#+end_src
+
+#+begin_src shell
+uniq ./assets/unq.txt
+uniq -d ./assets/unq.txt
+uniq -u ./assets/unq.txt
+uniq -ui ./assets/unq.txt
+uniq -ci ./assets/unq.txt
+
+uniq -s2 ./assets/unq.txt
+uniq -w5 ./assets/unq.txt
+#+end_src
+
+*-f N* = comparison karte time *first N fields ignore karo*
+Agar kisi line me *N se kam fields hain*, to:
+- *uniq* us line me jitne fields hain sab skip kar dega
+- Phir comparison *remaining characters* se karega
+- Agar kuch bhi remaining nahi hai → *empty string ""* compare hoti hai
+- To *aaKiwi* ke case me saare N se kam hai aur empty string compare hogi *"" == ""* isliye saare same hai
+#+begin_src shell
+uniq -f1 ./assets/unq.txt
+uniq -c -f1 ./assets/unq.txt
+#+end_src

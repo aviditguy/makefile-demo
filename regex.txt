@@ -1,0 +1,60 @@
+Hello World Namaste!
+sales1.txt
+orders3.txt
+sales2.txt
+sales3.txt
+apac1.txt
+europe2.txt
+na1.txt
+na2.txt
+sa1.txt
+
+
+sam.txt
+body { background-color: #fefbd8; }
+h1 { background-color: #0000ff; }
+
+<b>bold</b>
+<b>bold</b> and <b>strong</b>
+file.txt
+file1.txt
+file12.txt
+file123.txt
+
+cat
+cater
+scatter
+concat
+hello - world
+color-coded matching
+hello sam
+say hello world
+
+Hello
+HelloHello
+Helloo
+
+I like cat
+I like dog
+I like bird
+
+this is is a test
+hello hello world
+no no yesyes
+abc,abc def
+one two, two three
+
+Order shipped
+Order cancelled
+Invoice shipped
+Invoice cancelled
+Ref shipped
+Ref cancelled
+<title>My Regex Practice</title>
+
+<a href="/home"><img src="img.png"></a>
+<img src="home.png">
+
+11111
+33333-
+44444-4444

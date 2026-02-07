@@ -1,0 +1,319 @@
+* sed command in Linux
+
+*sed* (stream editor) Linux/Unix ka ek *non-interactive text editor* hai jo text ko stream ki tarah read karke
+uspar operations karta hai — jaise *replace, delete, insert, select, etc*.
+Ye files ya stdin dono par kaam karta hai.
+
+Main use-case: *search + replace, filtering, batch text editing*.
+
++ *Sed kya karta hai?*
+  Sed line-by-line input read karta hai:
+  #+begin_src
+input → pattern space → apply commands → output
+  #+end_src
+
+Default behavior:
+- Har line read karta hai
+- Agar koi command match hoti hai to apply karta hai
+- Output print karta hai
+
++ *Basic Syntax*
+  #+begin_src
+sed [options] 'command' file
+  #+end_src
+
+*Example*
+#+begin_src shell
+echo "I have a cat" | sed 's/cat/dog/'
+#+end_src
+➡ first occurrence of *cat → dog*
+
+** Most Common Command: *s* (substitute)
+
+#+begin_src
+s/pattern/replacement/flags
+#+end_src
+Address decide karta hai *kis line par substitution chalegi*.
+
+*Example File:*
+#+begin_src
+apple banana apple
+apple is apple red
+banana is yellow
+123 apple 456 apple & apple
+apple Apple APPLE
+   apple with spaces
+#+end_src
+
+- *s/apple/orange*                 Replace first occurrence of apple with orange in each line
+- *2s/apple/orange*                Replace on specific (2nd) line
+- *1,5s/apple/orange*              Replace in range lines[1-5]
+- *s/apple/orange/n*               Replace nth occurrence of apple to orange
+
+#+begin_src shell
+sed 's/apple/orange/' ./assets/sed.txt
+sed '2s/apple/orange/' ./assets/sed.txt
+sed '2,5s/apple/orange/g' ./assets/sed.txt
+
+sed 's/apple/orange/2' ./assets/sed.txt
+sed 's/apple/orange/3' ./assets/sed.txt
+#+end_src
+
+*Flags:*
+- *g (global)*                Line me *saare matches replace* karega
+- *i (case-insensitive)*      Upper/Lowercase ignore karega
+- *p (print modified lines)*  Sirf wo lines print karega jaha substitution hua.
+
+  #+begin_src shell
+sed 's/apple/orange/g' ./assets/sed.txt
+sed -n '3,5s/apple/orange/p' ./assets/sed.txt
+  #+end_src
+
+- *Sed* ka default behavior hai har line print karo agar match ho ya nahi
+- with *p* hum explicitly print karenge aur *-n* option se sed ka default print band karo
+
+** Common Sed Commands
+
+| *Command* | *Meaning*                                    |   | *Command* | *Meaning*               |
+|---------+--------------------------------------------+---+---------+-----------------------|
+| *s*       | substitute                                 |   | *d*       | delete line           |
+| *p*       | print                                      |   | *a*       | append after line     |
+| *i*       | insert before line                         |   | *c*       | change (replace) line |
+| *N*       | Next lines ko \n ke saath append karta hai |   | *=*       | print line number     |
+
+#+begin_src
+apple banana apple
+apple is apple red
+banana is yellow
+123 apple 456 apple & apple
+apple Apple APPLE
+   apple with spaces
+#+end_src
+
+#+begin_src shell
+sed '3d' ./assets/sed.txt
+sed '2,5d' ./assets/sed.txt
+sed '/apple/d' ./assets/sed.txt
+
+sed -n '/banana/!p' ./assets/sed.txt    # wo saari lines print karo jisme banana nahi hai
+
+sed '2i Hello World' ./assets/sed.txt
+sed '2a Hello World' ./assets/sed.txt
+sed '2c Hello World' ./assets/sed.txt
+
+sed '=' ./assets/sed.txt
+sed 'N;s/\n/ /' ./assets/sed.txt
+#+end_src
+
++ *N = Next line ko current me join kar deta hai with '\n'.*
++ Example: *sed 'N' file*
+Output:
+#+begin_src
+apple
+banana
+cat
+dog
+#+end_src
+
+Same dikhega, BUT internally:
+#+begin_src
+apple\nbanana
+cat\ndog
+#+end_src
+➡ 2-2 lines ka block ban gaya.
+
+*** Ranges in Sed
+#+begin_src
+start,end COMMAND
+#+end_src
+
+- *2*                    Do operation on Line 2
+- *$*                    This means Last line
+- *2,4*                  Range operation on Line [2-4]
+- *2,$*                  Line 2 to Last line
+- */pattern/p*           Do operation on line containing *pattern*
+- */start/,/end/*        Block opearation on all lines within *start-end* pattern
+- *2,/pattern/*          From Line 2 to line containing *pattern*
+- *range1; range2*       Multiple ranges
+
+#+begin_src shell
+sed -n '2p' ./assets/sed.txt
+sed -n '$p' ./assets/sed.txt
+sed -n '2,4p' ./assets/sed.txt
+sed -n '2,$p' ./assets/sed.txt
+
+sed -n '/red/p' ./assets/sed.txt
+sed -n '/red/,/APPLE/p' ./assets/sed.txt
+sed -n '2,/456/p' ./assets/sed.txt
+
+sed -n '1,2p; 5,6p' ./assets/sed.txt
+#+end_src
+
+*** Regexes in Sed
++ Sed uses *Basic Regular Expressions (BRE)* by default.
++ With *-E or -r → Extended Regular Expressions (ERE)*.
++ Always use *-E* option with regex:
+  - *dot(.), |, ***, *+, ?, ^, $, [abc], [^abc], {}, ()*
+
+#+begin_src
+apple banana apple
+apple is apple red
+banana is yellow
+123 apple 456 apple & apple
+apple Apple APPLE
+   apple with spaces
+#+end_src
+
+#+begin_src shell
+sed -n '/[0-9]/p' ./assets/sed.txt
+sed -En 's/^ +//p' ./assets/sed.txt
+sed -En '/red|yellow/p' ./assets/sed.txt
+#+end_src
+
+
+** Important Options
+
+| *Option*  | *Meaning*            |
+|---------+--------------------|
+| *-n*      | silent mode        |
+| *-e*      | multiple commands  |
+| *-f*      | script file        |
+| *-i*      | edit file in-place |
+| *-r / -E* | extended regex     |
+
+#+begin_src shell
+sed '2p' ./assets/sed.txt
+sed -n '2p' ./assets/sed.txt
+
+sed -e 's/a/A/g' -e 's/b/B/g' ./assets/sed.txt
+sed 's/a/A/g; s/b/B/g' ./assets/sed.txt           # better use this
+
+sed -i 's/apple/orange/g' ./assets/sed.txt
+sed -i.bak 's/apple/orange/g' ./assets/sed.txt
+#+end_src
+
+
+** Additional
+
+*** Hold Space (Sed ka secret memory)
+Sed ke pass 2 buffers hote hain:
+#+begin_src
+Pattern Space → current line yahan aati hai
+              → sed isi par commands run karta hai
+              → default output bhi isi se hota hai
+
+Hold Space → temporary storage (extra storage)
+           → jab chaho store/retrieve kar sakte ho   
+#+end_src
+
+*Hold space = clipboard jaisa*
+
+| *Command* | *Meaning*              |   | *Command* | *Meaning*                |
+|---------+----------------------+---+---------+------------------------|
+| *h*       | copy pattern → hold |   | *H*       | append pattern → hold |
+| *g*       | copy hold → pattern |   | *G*       | append hold → pattern |
+| *x*       | swap pattern & hold  |   |         |                        |
+
+#+begin_src
+apple banana apple
+apple is red
+banana is yellow
+123 apple 456
+apple Apple APPLE
+   apple with spaces
+#+end_src
+
+#+begin_src shell
+sed '1h;1d;p;g' ./assets/sed.txt
+
+sed -n '1h;2g;p' ./assets/sed.txt
+
+sed '1h;1!H;$!d;g' ./assets/sed.txt
+
+sed 'h;G' ./assets/sed.txt
+#+end_src
+
+*** Branching (Flow Control)
+Sed me bhi C ke goto jaisa system hai:
+- *:label*       label define
+- *b label*      jump always
+- *t label*      jump if substitution happened
+
+#+begin_src shell
+sed '/banana/!b skip; p; :skip' ./assets/sed.txt
+
+sed -n '/[0-9]/b num; b; :num; s/^/NUMBER LINE: /p' ./assets/sed.txt
+
+sed '
+s/apple/FRUIT/
+t found
+b
+:found
+s/^/FOUND: /
+' ./assets/sed.txt
+#+end_src
+
+*** Quit Command (*q*)
+Sed normally poori file padhta hai.
+*q* is like return statement.
+
+#+begin_src shell
+sed '2q' ./assets/sed.txt
+sed '/yellow/q' ./assets/sed.txt
+#+end_src
+
+
+
+
+
+** Sed Practical Problems
+#+begin_src
+# User data
+id: 101 name: Alice age: 25
+id: 102 name: Bob age: 30
+id: 103 name: Carol age: 28
+
+ERROR: disk   full
+INFO: system    ok
+WARNING:   high memory
+#+end_src
+
++ *1 Sirf IDs extract karna*
+  #+begin_src shell
+sed -En '/id: ([0-9]+).*/p' ./assets/sed_prob.txt
+sed -En 's/id: ([0-9]+).*/\1/p' ./assets/sed_prob.txt
+  #+end_src
+
++ *2 Names extract karna*
+  #+begin_src shell
+sed -En 's/.*name: ([a-zA-Z]+).*/\1/p' ./assets/sed_prob.txt
+  #+end_src
+
++ *3 ERROR lines higlight*
+  #+begin_src shell
+sed -n '/ERROR/s/^/*** /p' ./assets/sed_prob.txt
+  #+end_src
+
++ *4 INFO aur WARNING delete*
+  #+begin_src shell
+sed '/INFO\|WARNING/d' ./assets/sed_prob.txt
+  #+end_src
+
++ *5 Multiple spaces normalize*
+  - ➡ Extra spaces → single space
+      #+begin_src shell
+  sed -E 's/ +/ /g' ./assets/sed_prob.txt
+      #+end_src
+
++ *6 Block extract (ERROR-WARNING)*
+  #+begin_src shell
+sed -n '/ERROR/,/WARNING/p' ./assets/sed_prob.txt
+  #+end_src
+
++ *7 Line number add before text*
+  #+begin_src shell
+sed '=' ./assets/sed_prob.txt
+sed '=' ./assets/sed_prob.txt | sed 'N;s/\n/: /'
+
+sed -e '/^ *$/d' ./assets/sed_prob.txt
+  #+end_src

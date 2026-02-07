@@ -1,0 +1,165 @@
+* Terminal Toggle System in Emacs
+
+** 1 Config State and Helper Functions
+
+#+begin_src elisp
+  (defvar my/config
+    '(:term-name "*my-terminal*"
+  	       :term-type "ansi-term"
+  	       :term-below t))
+
+  (defun my/config-toggle (key)
+    "Toggle boolean KEY in `my/config` plist."
+    (setf my/config
+  	(plist-put my/config key
+  		   (not (plist-get my/config key)))))
+#+end_src
+
+
+** 2 Helper Functons
+
+#+begin_src elisp
+  (defun my/term-name ()
+    (plist-get my/config :term-name))
+
+  (defun my/term-buffer ()
+    (get-buffer (my/term-name)))
+
+  (defun my/term-window ()
+    (get-buffer-window (my/term-name)))
+#+end_src  
+
+- *get-buffer* Agar buffer exists karta hai to buffer or nil
+- *get-buffer-window* Ye buffer ki window return karta hai or nil
+  - Agar buffer visible window me nahi hai to nil
+#+begin_src elisp
+  (get-buffer "*scratch*")
+  (get-buffer "terminal.org")
+  (get-buffer "non-existent")
+
+  (get-buffer-window "*scratch*")
+  (get-buffer-window "terminal.org")
+  (get-buffer-window "non-existent")
+#+end_src
+
+- 2 aur helper functions:
+#+begin_src elisp
+  (defun my/terminal-visible-p ()
+    "Checks if terminal buffer is visible in window. window or nil"
+    (when-let ((win (my/term-window)))
+      (if (window-live-p win) win nil)))
+
+  (defun my/terminal-focused-p ()
+    "Checks if terminal is visible and also point is on terminal. t or nil"
+    (when-let ((win (my/terminal-visible-p)))
+      (eq win (selected-window))))
+#+end_src
+
+- *window-live-p* Ye check karta hai ki buffer window me visible hai ya nahi *window or nil*
+- *selected-window* current window return karta hai (current = jis window me point hoga)
+#+begin_src elisp
+  (window-live-p (get-buffer-window "*scratch*"))
+  (window-live-p (get-buffer-window "terminal.org"))
+  (window-live-p (get-buffer-window "non-existent"))
+
+  (selected-window)
+  (eq (get-buffer-window "terminal.org") (selected-window))
+#+end_src
+
+** 3 Create Terminal Buffer in Background
+
+#+begin_src elisp
+  (defun my/create-terminal ()
+    "Creates a terminal buffer in background"
+    (unless (my/term-buffer)
+      (save-window-excursion
+        (let ((buf (ansi-term (getenv "SHELL"))))
+  	(with-current-buffer buf
+  	  (rename-buffer (my/term-name)))))))
+#+end_src
+
+- *ansi-term*
+  - *getenv "SHELL"* ye basically environment variables se *SHELL* variable layega
+    - Ye basically hai: *echo $SHELL* terminal me
+  - Fir ye *ansi-term* ko bolega ki ye program run karo kisi buffer me ise kholo
+- *with-current-buffer* is buffer ko kholega aur usme kuch kaam karega buffer exists karna chahiye nahi to error
+#+begin_src elisp
+  (ansi-term (getenv "SHELL"))
+
+  (with-current-buffer (get-buffer "*scratch*")
+    (insert "Hello World"))
+#+end_src
+
+
+** 4 Show Terminal in Split Window
+
+#+begin_src elisp
+  (defun my/show-terminal (&optional switch)
+    "Creates terminal in split window if not created and puts point in window."
+    (my/create-terminal)
+
+    (let ((win (my/terminal-visible-p)))
+      (when (not win)
+        (setf win (if (plist-get my/config :term-below)
+  		    (split-window nil -15 'below)
+  		  (split-window nil -100 'right)))
+        (set-window-buffer win (my/term-buffer)))
+      (when switch
+        (select-window win))))
+#+end_src
+
+- *(split-window &optional WINDOW SIZE SIDE)*
+  - WINDOW *nil or (selected-window)*
+- *select-window* point ko move karta hai is window pe
+  - window vsible honi chahiye nahi to error
+- *set-window-buffer* is window me buffer change karta hai
+#+begin_src elisp
+  (split-window-right)
+  (split-window-below)
+  (split-window nil -20 'below)
+  (split-window (selected-window) -50 'right)
+
+  ;; window visible honi chahiye nahi to error
+  (select-window (get-buffer-window "init.el"))
+  (select-window (get-buffer-window "*scratch*"))
+
+  ;; Jis window me 'scratch' dikha rahe ho ab usme 'Messages' dikhao
+  (set-window-buffer
+   (get-buffer-window "*scratch*")
+   (get-buffer "*Messages*"))
+#+end_src
+
+
+** 5 Hide Terminal if Terminal is Focused
+
+#+begin_src elisp
+  (defun my/hide-terminal ()
+    "Hides terminal if point is in terminal window."
+    (if (my/terminal-focused-p)
+        (delete-window (my/term-window))))
+#+end_src
+
+- *delete-window* buffer ki window delete karta hai buffer abhi bhi exists karta hai
+#+begin_src elisp
+  ;; window visible honi chahiye nahi to error
+  (delete-window (get-buffer-window "*scratch*"))
+#+end_src
+
+** 6 Final Toggle & Move System
+
+#+begin_src elisp
+  (defun my/toggle-terminal ()
+    "Toggles terminal if point is in terminal window then hide otherwise show."
+    (interactive)
+    (if (my/terminal-focused-p)
+        (my/hide-terminal)
+      (my/show-terminal t)))
+
+  (defun my/move-terminal ()
+    "Moves terminal toggle between below & right."
+    (interactive)
+    (my/config-toggle :term-below)
+    (when (my/terminal-visible-p)
+      (my/hide-terminal))
+    (my/show-terminal t))
+#+end_src

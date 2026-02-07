@@ -1,0 +1,6 @@
+apple banana apple
+apple is apple red
+banana is yellow
+123 apple 456 apple & apple
+apple Apple APPLE
+   apple with spaces

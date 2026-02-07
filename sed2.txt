@@ -1,0 +1,19 @@
+apple 123
+banana 456
+grape 789
+
+cat
+dog
+Cat
+DOG
+
+hello world
+hello123
+hi there
+
+email@test.com
+test@mail.org
+invalid@email
+
+2024-01-10
+10-02-2025

@@ -1,0 +1,73 @@
+* *tr* command in Linux
+
+*tr* command in Linux is a text-processing utility used to *translate, delete or squeeze characters*
+from stdin and write result to stdout.
+
+#+begin_src
+tr [OPTIONS] SET1 [SET2]
+#+end_src
+
+- *SET1*: Specifies the set of characters to be replaced or manipulated
+- *SET2*: Specifies the set of characters to replace SET1 characters.
+
+** Options and Their Descriptions
+| *Option* | *Description*                                                   |
+|--------+---------------------------------------------------------------|
+| *-c*     | Complement the set of characters in SET1                      |
+| *-d*     | Delete characters in SET1                                     |
+| *-s*     | Squeeze repeated characters into a single character           |
+| *-t*     | Truncate the longer of SET1 or SET2 so both have equal length |
+
+- Usually *-c* option akele nahi aata ye group me aata hai, *-cd or -cs*.
+- *-c* bolta hai: *jo characters diye gaye set me nahi hai unpe operation karo*.
+
+#+begin_src shell
+echo -e 'hello world' | tr 'a-z' 'A-Z'
+echo -e 'abc123xyz' | tr -d '0-9'
+echo -e 'hello   world    linux' | tr -s ' '
+
+echo -e 'abcdef' | tr -t 'abcdef' 'XYZ'
+echo -e 'abc' | tr -t 'abc' 'XYZ123'
+
+echo -e 'abc123!@#XYZ' | tr -cd 'a-zA-Z'
+echo -e 'order id: AB-12345-XY' | tr -cd '[:digit:]'
+#+end_src
+
+*Special Characters in SET1 and SET2*
+- *Ranges: a-z* matches all lowercase letters.
+- *Classes: [:digit:], [:lower:], [:upper:], [:alnum:]*, etc.
+
+** Practical Examples
+
+*1. Convert lowercase to uppercase and remove digits*
+#+begin_src shell
+echo -e 'Hello World 123' | tr 'a-z' 'A-Z' | tr -d '0-9'
+#+end_src
+
+*2. Remove all the whitespace and extra !*
+#+begin_src shell
+echo -e 'Hell o Wor   ld!!!!' | tr -s '!' | tr -d ' '
+#+end_src
+
+*3. Remove all non alphanumeric characters*
+#+begin_src shell
+echo -e 'user_123@linux!' | tr -cd '[:alnum:]'
+#+end_src
+
+*4. ROT13 cipher*
+  - *ROT13 (Rotate by 13)* ek simple substitution cipher hai jisme:
+  - har alphabet ko *13 positions aage* shift kar diya jata hai
+  - sirf alphabets (A–Z, a–z) pe apply hota hai
+  - digits aur symbols unchanged rehte hain
+  - *a ↔ n*, *b ↔ o*, .... *z ↔ m*
+#+begin_src shell
+echo -e 'hello world' | tr 'a-z' 'n-za-m'
+#+end_src
+
+  - *a b c d e f g h i j k l m n o p q r s t u v w x y z*
+  - *n o p q r s t u v w x y z a b c d e f g h i j k l m*
+
+*5. Decrypt ROT13 cipher*
+#+begin_src shell
+echo -e 'uryyb jbeyq' | tr 'n-za-m' 'a-z'
+#+end_src

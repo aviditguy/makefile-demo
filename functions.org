@@ -1,0 +1,245 @@
+* Function in Common Lisp
+
+Common Lisp me function:
+- ek callable object hai
+- first-class citizen hai
+- dynamically redefine ho sakte hain
+- closures support karta hai
+- multiple return values de sakta hai
+- keyword & optional arguments support karta hai
+
+
+#+begin_src lisp
+(defun add (a b)
+  (+ a b))
+
+(add 2 3)
+#+end_src
+
+** Argument Types
+
+*** Optional Parameters — *&optional*
+#+begin_src lisp
+(defun greet (name &optional age)
+  (format t "Name: ~A Age: ~A" name age))
+
+(greet "Ram")
+(greet "Ram" 25)
+#+end_src
+
+*** Keyword Parameters — *&key*
+#+begin_src lisp
+(defun person (&key name age)
+  (format t "~A is ~A years old" name age))
+
+(person :name "Aman" :age 22)
+#+end_src
+
+*Default Values:*
+#+begin_src lisp
+(defun person (&key (name "Unknown") (age 0))
+  (format t "~A is ~A years old" name age))
+
+(person)
+(person :name "Aman")
+#+end_src
+
+*** Rest Parameters — *&rest*
+Unlimited arguments.
+#+begin_src lisp
+(defun sum-all (&rest nums)
+  (reduce #'+ nums))
+
+(sum-all)
+(sum-all 1 2 3 4 5)
+(sum-all 10 20 30 40)
+#+end_src
+
+
+** Anonymous Functions — *lambda*
+#+begin_src lisp
+(funcall (lambda (x) (* x x)) 5)
+#+end_src
+
+** funcall vs apply
+*funcall* — Normal call:
+#+begin_src lisp
+(defun sub (a b)
+  (- a b))
+
+(funcall #'sub 10 5)
+#+end_src
+
+*apply* — List ko arguments me spread karta hai.
+#+begin_src lisp
+(apply #'sub '(10 2))
+(apply #'+ '(1 2 3 4 5))
+#+end_src
+
+** First-Class Functions
+Function ko variable me store karna:
+#+begin_src lisp
+(let ((f #'sub))
+  (funcall f 10 5))
+
+(mapchar #'add '(1 2 3) '(4 5 6))
+#+end_src
+
+** Closures
+Function jo apna environment remember karta hai.
+#+begin_src lisp
+(defun make-adder (n)
+  (lambda (x) (+ x n)))
+
+(let ((add5 (make-adder 5)))
+  (funcall add5 10))
+#+end_src
+
+** Multiple Return Values
+#+begin_src lisp
+(defun divide (a b)
+  (values (floor a b) (mod a b)))
+
+(multiple-value-bind (q r) (divide 10 3)
+  (print q)
+  (print r))
+#+end_src
+
+** High-Order Functions
+Function jo function le ya return kare.
+Examples:
+- mapcar
+- reduce
+- remove-if
+- find-if
+
+  #+begin_src lisp
+(mapcar (lambda (x) (* x 2)) '(1 2 3))
+  #+end_src
+
+
+** Local Functions
+*flet*
+Local function:
+#+begin_src lisp
+(flet ((square (x) (* x x)))
+  (square 5))
+#+end_src
+
+*labels* (recursice allowed)
+#+begin_src lisp
+(labels ((fact (n)
+	   (if (<= n  1) 1
+	       (* n (fact (- n 1))))))))
+
+(fact 5)
+#+end_src
+
+
+
+** Function Namespace
+Common Lisp me *variables aur functions alag namespace* me hote hain.
+
+#+begin_src lisp
+(defparameter x 10)
+
+(defun x (y) (+ y 1))
+
+x
+(x 5)
+#+end_src
+
+** Inline Functions
+#+begin_src lisp
+(declaim (inline add))
+#+end_src
+Compiler optimization.
+
+** Function Redefinition
+Common Lisp dynamic hai:
+#+begin_src lisp
+(defun foo () 10)
+
+(defun foo () 20)
+#+end_src
+Allowed hai.
+
+** Tail Recursion
+CL guarantee nahi karta tail call optimization, but compilers optimize kar sakte hain.
+
+** Generic Functions (OOP)
+CLOS system:
+#+begin_src lisp
+(defgeneric area (shape))
+(defmethod area ((r rectangle))
+  (* (width r) (height r)))
+#+end_src
+
+
+
+** Closures
+*Function + uska captured environment*
+Matlab function apne banne waqt ke variables ko *remember* karta hai.
+*Closure ≈ object with private state*
+
+#+begin_src lisp
+(defun make-counter ()
+  (let ((c 0))
+    (lambda () (incf c))))
+
+(defparameter *c1* (make-counter))
+(defparameter *c2* (make-counter))
+
+(funcall *c1*)  ; 1
+(funcall *c1*)  ; 2
+
+(funcall *c2*)  ; 1 <-- NEW memory
+#+end_src
+
+- *c1* aur *c2* dono ke paas apna *c* hai
+- Dono independent hai
+
+*** Internal Model
+Closure me hota kya hai?
+#+begin_src
+Closure =
+    Code pointer
+    +
+    Environment pointer
+#+end_src
+
+Environment me stored hota hai: *c = 0*
+Jab function return hota hai:
+- Normally stack destroy hota
+- BUT closure me environment heap pe move hota
+- Isliye variable survive karta
+
+
+*** Examples 1 — Adder Generator
+#+begin_src lisp
+(defun make-adder (n)
+  (lambda (x)
+    (+ x n)))
+
+(defparameter *add5* (make-adder 5))
+(funcall *add5* 3)
+
+(defparameter *add10* (make-adder 10))
+(funcall *add10* 3)
+#+end_src
+
+#+begin_src lisp
+(defun make-memo-fib ()
+  (let ((memo (make-hash-table)))
+    (labels ((fib (n)
+	       (or (gethash n memo)
+		   (setf (gethash n memo)
+			 (if (< n 2)
+			     n
+			     (+ (fib (- n 1)))
+			     (fib (- n 2))))))))
+    #'fib)))
+
+(defparameter *mfib* (make-memo-fib))
+(funcall *mfib* 40)
+#+end_src

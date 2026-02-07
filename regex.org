@@ -1,0 +1,221 @@
+* Regular Expression
+Regex ek *powerful tool* hai text manipulation ke liye
+➡ search, replace, validation, extraction, parsing, etc.
+
+** 1.Matching Single Character
+*Dot (.)* kisi bhi ek single character ko match karta hai (newline chhod ke).
+
+#+begin_src shell
+Hello World Namaste!
+sales1.txt
+orders3.txt
+sales2.txt
+sales3.txt
+apac1.txt
+europe2.txt
+na1.txt
+na2.txt
+sa1.txt
+
+grep -P 'Namaste' ./assets/regex.txt
+grep -P 'sales.' ./assets/regex.txt
+grep -P '.a.\.txt' ./assets/regex.txt
+#+end_src
+
+** 2.Character Sets
+*Basic Character Set [ ]*
+- *[ns]* → ya to *n* ya *s*
+- *[a-zA-Z0-9_]* → sirf *ek character* jo is range me ho
+
+*❌ Negated Set [^ ]* example ye *[^0-9]* → match karega koi bhi single char jo *digit nahi hai*
+
+#+begin_src shell
+na1.txt
+na2.txt
+sa1.txt
+sam.txt
+body { background-color: #fefbd8; }
+h1 { background-color: #0000ff; }
+
+grep -P '[ns]a.\.txt' ./assets/regex.txt
+grep -P '[ns]a[0-9]\.txt' ./assets/regex.txt
+grep -P '[ns]a[^0-9]\.txt' ./assets/regex.txt
+#+end_src
+
+** 3.Repeating Matches
+
+| *Pattern* | *Matlab*            |   | *Pattern* | *Matlab*                  |
+|---------+-------------------+---+---------+-------------------------|
+| ***       | 0 or more matches |   | *{n}*     | exactly *n* matches       |
+| *+*       | 1 or more matches |   | *{n,m}*   | min *n* aur max *m* matches |
+| *?*       | 0 or 1 match      |   | *{n,}*    | atleast *n* matches       |
+|         |                   |   | *{,m}*    | atmost *m* matches        |
+
+- *Greedy Matches* → **, +, {n,m} aur {n,}* by default greedy hai matlab ye look for *longest possible match*.
+- *Lazy Matches*   → **?, +?, {n,m}? aur {n,}?* ye inke lazy equivalent hai, ye look for *shortest possible match*.
+
+#+begin_src shell
+<b>bold</b>
+<b>bold</b> and <b>strong</b>
+file.txt
+file1.txt
+file12.txt
+file123.txt
+
+grep -P 'file\d{3}' ./assets/regex.txt
+grep -P 'file\d{,2}' ./assets/regex.tx
+
+grep -P 'file\d*' ./assets/regex.txt
+grep -P 'file\d*?' ./assets/regex.txt
+
+grep -P 'file\d+' ./assets/regex.txt
+grep -P 'file\d+?' ./assets/regex.txt
+
+grep -P 'file\d{2,}' ./assets/regex.txt
+grep -P 'file\d{2,}?' ./assets/regex.txt
+
+grep -P 'file\d{2,3}' ./assets/regex.txt
+grep -P 'file\d{2,3}?' ./assets/regex.txt
+#+end_src
+
+** 4.Word and String Boundary
+*\b aur \B* ye pattern nahi ye position match karte hai
+- *\b* → matches *word boundary* position between *\w - \W*
+- *\B* → matches *non-word boundary* position between *\w - \w* and *\W - \W*
+
+#+begin_src shell
+cat
+cater
+scatter
+concat
+hello - world
+color-coded matching
+
+grep -P 'cat' ./assets/regex.txt
+grep -P '\bcat' ./assets/regex.txt
+grep -P 'cat\b' ./assets/regex.txt
+grep -P '\bcat\b' ./assets/regex.txt
+grep -P '\Bcat\B' ./assets/regex.txt
+grep -P '\B-\B' ./assets/regex.txt
+#+end_src
+
+*String Boundary:*
+- *^* → matches start of string
+- *$* → matches end of string
+#+begin_src shell
+hello - world
+hello sam
+say hello world
+
+grep -P '^hello' ./assets/regex.txt
+grep -P 'world$' ./assets/regex.txt
+grep -P '^hello.*world$' ./assets/regex.txt
+#+end_src
+
+** 5.Subexpressions
+Grouping together expression *()*. Lets say we want to match *HelloHello* 2 occurrences of *Hello*
+- If we do *Hello{2}* this will look for *Helloo*. ❌
+- Correct way to do this is *(Hello){2}*. ✅
+
+#+begin_src shell
+Hello
+HelloHello
+Helloo
+
+grep -P 'Hello{2}' ./assets/regex.txt
+grep -P '(Hello){2}' ./assets/regex.txt
+#+end_src
+
+** 6.Alteration
+Alteration (|) means "match this OR that".
+It applies to the entire expression on either side, unless limited by parenthesis.
+*⚠️ bina brackets ke poora expression split hota hai*
+
+#+begin_src shell
+I like cat
+I like dog
+I like bird
+
+grep -P 'I like cat|dog' ./assets/regex.txt
+grep -P 'I like (cat|dog)' ./assets/regex.txt
+#+end_src
+
+** 7.Backreferences
+Backreference = pehle match ki hui group ko dobara use karna
+*Note* subexpression they *only work with subexpressions*.
+
+Here *\1* refers to first subexpression, *\2* to second *\3* and so on ...
+#+begin_src shell
+this is is a test
+hello hello world
+no no yesyes
+abc,abc def
+one two, two three
+
+# Duplicate Words
+grep -P '\b(\w+)\s+\1\b' ./assets/regex.txt
+grep -P '\b(\w+)\b[\s,]+\1\b' ./assets/regex.txt
+#+end_src
+
+** 8.Lookaround
+
+#+begin_src shell
+Order shipped
+Order cancelled
+Invoice shipped
+Invoice cancelled
+Ref shipped
+Ref cancelled
+<title>My Regex Practice</title>
+
+# Positive Lookahead: Sirf Order ko match karo jab uske baad shipped ho.
+grep -P 'Order(?=\s+shipped)' ./assets/regex.txt
+
+# Positive Lookbehind: Sirf shipped ko match karo jab uske peeche Invoice ho.
+grep -P '(?<=Invoice\s)shipped' ./assets/regex.txt
+
+# Negative Lookahead: Sirf Order ko match karo jab uske baad cancelled na ho.
+grep -P 'Order(?!\s+cancelled)' ./assets/regex.txt
+
+# Negative Lookbehind: Sirf cancelled ko match karo jab uske peeche Ref na ho.
+grep -P '(?<!Ref\s)cancelled' ./assets/regex.txt
+
+# Positive Lookaround: title se sirf content nikalo
+grep -P '(?<=<title>).*?(?=<\/title>)' ./assets/regex.txt
+#+end_src
+
+** 9.Conditional Matching
+
+*** Conditional Processing Based on Backreferences
+- *(?(backreference)true|false)*
+
+Match *img* tag and if its inside *<a>* tag then also match whole expression.
+#+begin_src shell
+<a href="/home"><img src="img.png"></a>
+<img src="home.png">
+
+grep -P '(<a.*?>)?<img.*?>(?(1)<\/a>)' ./assets/regex.txt
+#+end_src
+
+*Breakdown of expression:*
+- (<a.*?>)? checks if opening *<a>* tag exists or not we put this in subexpression
+- *(?(1)<\/a>)* here the conditional processing is working
+- we check if *?(1)* exists if subexpression *\1* exists then match closing *</a>* tag.
+
+*** Lookaround Conditioning
+- Its based on whether a lookaround condition succeeds or not. *(?(lookaround)true|false)*
+
+Match valid zip codes, which are *11111, 44444-4444*.
+#+begin_src shell
+11111
+33333-
+44444-4444
+
+# Match valid zip codes
+grep -P '\d{5}(?(?=-)-\d{4})' ./assets/regex.txt
+#+end_src
+
+*Breakdown of expression:*
+- *\d{5}* matches 5 digit
+- *(?=-)* looks ahead for *-*
+- *(?(?=-)-\d{4})* if *-* occurs after *\d{5}* then loo for *-\d{4}*

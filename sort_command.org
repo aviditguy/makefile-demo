@@ -1,0 +1,34 @@
+* sort command in Linux
+
+*sort* is a text-processing utility that:
+- *Reads lines of text* (from file(s) or stdin).
+- Orders them according to a chosen rule (lexicographic, numeric, month, version, locale-aware, etc.).
+- Writes the sorted result to stdout (or optionally a file).
+It’s line-based: each input line is a record.
+
+*Basic Usage:*
+#+begin_src
+sort file.txt
+sort file1.txt file2.txt
+#+end_src
+- Default: sorts lines lexicographically (dictionary order) based on current locale (LC_COLLATE).
+- Multiple Files, Concatenates both and sorts as one input.
+
+
+Internal Behavior
+- *External Merge Sort*: For large files, *sort* uses temporary disk files to perform an external merge sort.
+- *LC_COLLATE & LC_ALL*: Affects sort behavior based on locale. Use *LC_ALL=C* for byte-wise sort.
+
+Common Flags
+| *Flag*     | *Description*                                 |   | *Flag*         | *Description*                                               |
+|----------+---------------------------------------------+---+--------------+-----------------------------------------------------------|
+| *-n*       | Numeric sort (e.g., 10 after 2)             |   | *-r*           | Reverse sort                                              |
+| *-k*       | Sort on a specific field (column)           |   | *-t*           | Define a custom field delimiter (default is space or tab) |
+| *-u*       | Unique sort (removes duplicate lines)       |   | *-o*           | Write result to a file (e.g., -o output.txt)              |
+| *-M*       | Sort by month names (e.g., Jan, Feb, ...)   |   | *-V*           | Version sort (e.g., file2 < file10)                       |
+| *-c*       | Check if the file is sorted                 |   | *--parallel=N* | Use N threads for sorting                                 |
+| *--stable* | Preserve original order for equal sort keys |   |              |                                                           |
+
+#+begin_src shell
+
+#+end_src

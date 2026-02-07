@@ -1,0 +1,242 @@
+* Real World Regex Problems
+
+** 1.Strong Password Validator
+Rule:
+- Min 8 chars
+- At least 1 uppercase
+- At least 1 lowercase
+- At least 1 digit
+- At least 1 special char
+  
+#+begin_src shell
+✅ Test123!
+✅ Abc@1234
+✅ GoodPass@9
+❌ weakpass
+❌ NOLOWER1!
+❌ noupper1!
+❌ Short1!
+
+grep -P '^.{8,}$' ./assets/prob.txt
+grep -P '^(?=.*[a-z]).{8,}$' ./assets/prob.txt
+
+grep -P "^(?=.*[a-z])\
+(?=.*[A-Z])\
+(?=.*\d)\
+(?=.*[^a-zA-Z0-9])\
+.{8,}$" ./assets/prob.txt
+#+end_src
+
+** 2.Email Address
+Rule: *local-part@domain*
+- user.name123@gmail.com
+- no double dots, cannot start / end with dot
+- domain min 2 chars
+- domain me no underscore
+  
+#+begin_src shell
+✅ user@gmail.com
+✅ user-name_21@mail.co.in
+✅ john.doe@my-company.org
+❌ a..b@gmail.com
+❌ .bad@mail.com
+❌ @nouser.com
+❌ user@.com
+
+grep -P '^\w+@\w+\.\w{2,}$' ./assets/prob.txt
+grep -P '^\w+[-.\w]*@\w+[-.\w]*\.\w{2,}$' ./assets/prob.txt
+grep -P '^\w+(?:[.-]\w+)*@\w+(?:-\w+)*(?:\.\w{2,})+$' ./assets/prob.txt
+#+end_src
+
+** 3️.Indian Mobile Number
+Rule:
+- +91 | 91 optional, sepearated by space | - | no sep
+- starts with 6–9
+- exactly 10 digits
+
+  #+begin_src shell
+✅ +91 9876543210
+✅ 6876543210
+✅ +91-8123456789
+✅ 918123456789
+❌ +91-4123456789
+❌ 1234567890
+❌ +91 5123456789
+
+grep -P '[6-9]\d{9}' ./assets/prob.txt
+grep -P '^(\+91[\s-])?[6-9]\d{9}$' ./assets/prob.txt
+grep -P '^(\+?91[\s-]?)?[6-9]\d{9}$' ./assets/prob.txt
+#+end_src
+
+** 4.Date Validator (DD-MM-YYYY)
+Rule:
+- leap year included
+- valid day-month combo
+
+  #+begin_src shell
+✅ 29-02-2024
+✅ 30-04-2023
+✅ 31-12-2025
+❌ 31-11-2023
+❌ 29-02-2023
+❌ 00-01-2024
+❌ 15-13-2022
+
+grep -P '^(0[1-9]|1\d|2\d|3[01])-' ./assets/prob.txt
+
+grep -P '^(0[1-9]|1\d|2\d|3[01])-(0[1-9]|1[0-2])-' ./assets/prob.txt.
+
+grep -P '^(0[1-9]|1\d|2\d|3[01])-(0[1-9]|1[0-2])-\d{4}' ./assets/prob.txt
+
+grep -P "^((31-(01|03|05|07|08|10|12))|\
+((29|30)-(01|02|03|04|05|06|07|08|09|10|11|12))|\
+((0[1-9]|1\d|2[0-8])-(0[1-9]|1[0-2])))\
+-\d{4}$" ./assets/prob.txt
+#+end_src
+
+
+*** Leap Year Check
+Ek year leap year hota hai agar:
+- *Year divisible by 4*           2024 % 4 = 0 → leap ✅
+- *Year not divisible by 100*     1900 % 100 = 0 → not leap ❌
+- *Year divisible by 400*         2000 % 400 = 0 → leap ✅
+
+*Simple Formula:*
+#+begin_src
+(year % 4 == 0 && year % 100 != 0) 
+OR 
+(year % 400 == 0)
+#+end_src
+
+*** *Divisibility by 4 ka trick*
+  + number ke *last 2 digits 4 se divisible ho*
+  + 2024 → last 2 digits = 24 → 4 se divisible ✅
+  + 2016 → 16 → divisible ✅
+  + 2018 → 18 → not divisible ❌
+
+*Last 2 digits jo 4 se divisible hain*
+#+begin_src
+00 04 08
+12 16
+20 24 28
+32 36
+40 44 48
+52 56
+60 64 68
+72 76
+80 84 88
+92 96
+#+end_src
+
++ *Regex for divisible by 4*
+#+begin_src shell
+echo "2024 and 2016 and 2018" | grep -P '\d{2}((0[048])|([13579][26])|([2468][048]))'
+#+end_src
+
++ Final Regex for *Year divisible by 4 but not 100*
+  + *Divisible by 100* last 2 digits ends in 00, so *avoid 00*
+          #+begin_src shell
+  echo "2024 and 2016 and 2018 and 1900" | grep -P '\d{2}((0[48])|([13579][26])|([2468][048]))'
+          #+end_src
+
+*** *Divisibility by 400 ka trick*
+- *Last ke two digits always 00*
+- Aur first two digits divisible by 4
+  + 2000 → 20 % 4 se divisible ✅
+  + 2400 → 24 % 4 divisible ✅
+  + 1900 → 19 % 4 not divisible ❌
+
+    #+begin_src shell
+echo "2000 and 2400 and 1900" | grep -P '((0[48])|([13579][26])|([2468][048]))00'
+    #+end_src
+
+*** Final Full Leap Year Regex
+#+begin_src shell
+grep -P "^((0[1-9]|1\d|2[0-8])-(0[1-9]|1[0-2])-\d{4})|\
+(29-02-(\d{2}((0[48])|([13579][26])|([2468][048]))))|\
+((29|30)-((0[13-9])|(1[12]))-\d{4})|\
+(31-((0[13578])|(1[02]))-\d{4})$" ./assets/prob.txt
+#+end_src
+
+** 5️.Extract All URLs from Text
+
+#+begin_src shell
+Visit https://google.com and http://example.org/page?id=1 plus
+https://github.com/user/repo this much be enough links.
+
+grep -Po 'https?:\/\/[^\s"'\''"]+' ./assets/prob.txt
+#+end_src
+
+** 6️.HTML Tag Content Extractor
+Task:
+Get content of all <p>...</p>
+
+#+begin_src shell
+<p>One</p>
+<div><p>X</p></div>
+<p>Two</p>
+<p><span>Three</span></p>
+
+grep -Po '(?<=<p>).*?(?=</p>)' ./assets/prob.txt
+#+end_src
+
+** 7️.Duplicate Words Detector
+Task
+Find repeated consecutive words
+
+#+begin_src shell
+this is is a test
+test string string and we
+are are done
+
+grep -Po '\b(\w+)\s+\1\b' ./assets/prob.txt
+#+end_src
+
+** 8.IPv4 Address
+- 250 - 255
+- 200 - 249
+- 100 - 199
+- 0   - 99
+#+begin_src shell
+✅ 192.168.1.1
+✅ 10.0.0.5
+✅ 0.0.0.0
+✅ 172.16.254.1
+❌ 256.1.1.1
+❌ 999.10.10.10
+
+grep -P '(\d{1,3}\.){3}\d{1,3}' ./assets/prob.txt
+
+grep -P "^(((25[0-5])|(2[0-4]\d)|(1?\d{1,2}))\.){3}\
+((25[0-5])|(2[0-4]\d)|(1?\d{1,2}))$" ./assets/prob.txt
+#+end_src
+
+** 9.Log File Analyzer
+Expected
+✅ 192.168.1.10 GET /index.html 200
+✅ 10.0.0.5 POST /login 302
+✅ 8.8.8.8 DELETE /admin 403
+❌ bad.ip.addr …
+
+#+begin_src shell
+192.168.1.10 - - [10/Jan/2025] "GET /index.html HTTP/1.1" 200 1024
+10.0.0.5 - - [11/Jan/2025] "POST /login HTTP/1.1" 302 512
+8.8.8.8 - - [11/Jan/2025] "DELETE /admin HTTP/1.1" 403 64
+bad.ip.addr - - [11/Jan/2025] "GET /x HTTP/1.1" 200 10
+
+grep -P '' ./assets/prob.txt
+#+end_src
+
+** 10.JSON Key-Value Extractor
+
+#+begin_src shell
+{
+"name":"Sam"
+"age":25
+"height":5.9
+"active":true
+"married":null
+}
+
+grep -P '' ./assets/prob.txt
+#+end_src

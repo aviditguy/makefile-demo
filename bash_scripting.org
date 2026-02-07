@@ -1,0 +1,350 @@
+* Bash Scripting
+
+
+* Arithmetic Operations
+- Bash supports integer arithmetic natively.
+- For floating point, you use external tools like *bc* or *awk*.
+
+#+begin_src shell
+echo $((10 + 5))
+echo $((10 - 5))
+echo $((10 * 5))
+echo $((10 / 5))
+echo $((10 % 5))
+echo $((10 ** 3))
+
+x=5
+echo $((x+=5))
+echo $((x-=5))
+echo $((x*=5))
+echo $((x/=5))
+
+echo $((10.2 + 5))   # Floating Point not supported
+#+end_src
+
+Increment / Decrement
+#+begin_src shell
+i=10
+echo $((++i))
+echo $((i++))
+echo $i
+
+echo $((--i))
+echo $((i--))
+echo $i
+#+end_src
+
+Arithmetic in Loops & Conditions
+#+begin_src shell
+if ((10 > 5)); then
+    echo "10 is greater than 5"
+fi
+
+for ((i=0; i<5; i++)); do
+    echo $i
+done
+#+end_src
+
+Floating Point Arithmetic
+Bash itself handles *integers only*.
+Use *bc*:
+#+begin_src shell
+echo "5.5 + 2.3" | bc
+echo "scale=2; 5/3" | bc
+
+echo $(bc<<<"scale=4;12/7")
+
+myres=$(bc<<<"10.5*2")
+echo $myres
+#+end_src
+
+Random Numbers
+#+begin_src shell
+echo $RANDOM                  # 0 - 32267
+echo $((RANDOM % 10))         # 0 - 9
+
+echo $((RANDOM % 100 + 1))    # 1 - 100
+#+end_src
+
+Bitwise Operations
+#+begin_src shell
+echo $((1 & 1))        # 0001 & 0001 = 0001
+echo $((1 | 1))        # 0001 | 0001 = 0001
+echo $((1 ^ 1))        # 0001 ^ 0001 = 0000
+echo $((~1))           # 1 = 0001 --> 1110 = -2 (2s Complement)
+
+echo $((1 << 3))       # 00001 << 3 = 01000 = 8 --> 2^3
+echo $((8 >> 1))       # 01000 >> 1 = 00100 = 4 --> 8/2
+#+end_src
+
+Base Conversion
+#+begin_src shell
+echo $((2#1010))   # binary → decimal
+echo $((8#12))     # octal → decimal
+echo $((16#A))     # hex → decimal
+
+echo "obase=2; 10" | bc   # decimal → binary
+printf "%o\n" 10          # decimal → octal
+printf "%x\n" 255         # decimal → hex
+
+# Any base → Any base
+echo "obase=16; ibase=2; 1010" | bc    # binary → hex
+#+end_src
+
+
+#+begin_src shell
+read -p "Enter yes/no: " ans
+
+case $ans in
+    yes)
+	echo "You said YES"
+	;;
+    no)
+	echo "You said NO"
+	;;
+    ,*)
+	echo "Invalid"
+	;;
+esac
+#+end_src
+
+#+begin_src shell
+read -p "Enter something: " input
+
+case "$input" in
+
+  # 1) Multiple options
+  yes|y|YES)
+    echo "Multiple option match: YES group"
+    ;;
+
+  # 2) Prefix match
+  file*)
+    echo "Prefix match: starts with 'file'"
+    ;;
+
+  # 3) Character range
+  [0-9])
+    echo "Character range: single digit"
+    ;;
+
+  # 4) Pattern in middle
+  *error*)
+    echo "Contains word 'error'"
+    ;;
+
+  # 5) Default / any pattern
+  *)
+    echo "Default: anything else"
+    ;;
+esac
+#+end_src
+
+
+#+begin_src shell
+test 5 -gt 3
+echo $?
+
+[[ 5 -gt 3 ]]
+#+end_src
+
+Numeric Comparison Operators
+#+begin_src shell
+[[ 10 -eq 5 ]] && echo "10 = 5"
+[[ 10 -ne 5 ]] && echo "10 != 5"
+[[ 10 -gt 5 ]] && echo "10 > 5"
+[[ 10 -lt 5 ]] && echo "10 < 5"
+[[ 10 -ge 5 ]] && echo "10 >= 5"
+[[ 10 -le 5 ]] && echo "10 <= 5"
+
+[[ ! 10 -le 5 ]] && echo "10 <= 5"
+#+end_src
+
+String Comparison Operators
+#+begin_src shell
+[[ "hello" = "world" ]] && echo "same"
+[[ "hello" != "world" ]] && echo "not same"
+[[ -z "hello" ]] && echo "empty"
+[[ -n "hello" ]] && echo "not empty"
+#+end_src
+
+Logical Operators
+#+begin_src shell
+[[ 5 -gt 3 ]] && [[ 10 -gt 8 ]] && echo "5 > 3 && 10 > 8"
+#+end_src
+
+File Comparison
+
+| *Operator*        | *Meaning*     |   | *Operator*        | *Meaning*      |
+|-----------------+-------------+---+-----------------+--------------|
+| *-e*              | file exists |   | *-f*              | regular file |
+| *-d*              | directory   |   | *-r*              | readable     |
+| *-w*              | writable    |   | *-x*              | executable   |
+| *file1 -nt file2* | newer than  |   | *file1 -ot file2* | older than   |
+
+#+begin_src shell
+[[ -f /etc/passwd ]] && echo "File exists"
+[[ -d /etc ]] && echo "Directory exists"
+[[ -r /etc/passwd ]] && echo "Readable"
+[[ ! -w /etc/passwd ]] && echo "Not Writable"
+#+end_src
+
+
+
+#+begin_src shell :run t
+read -p "Enter number: " n
+
+if [[ $n -gt 0 ]]; then
+  echo "Positive"
+
+elif [[ $n -lt 0 ]]; then
+  echo "Negative"
+
+else
+  echo "Zero"
+fi
+#+end_src
+
+#+begin_src shell :run t
+for i in 1 2 3 4 5; do
+    printf "$i "
+done
+
+echo ""
+
+for i in {1..5}; do
+    printf "$i "
+done
+
+echo ""
+
+for ((i=0; i<5; i++)); do
+    [[ $i -eq 3 ]] && continue
+    printf "$i "
+done
+#+end_src
+
+
+#+begin_src shell
+i=1
+
+while [[ $i -le 5 ]]; do
+    echo $i
+    ((i++))
+done
+#+end_src
+
+Infinite loop
+#+begin_src shell :run t
+while true; do
+    echo "Running..."
+done
+#+end_src
+
+until Loop
+Opposite of while.
+Runs until condition becomes true
+#+begin_src shell :run t
+i=1
+
+until [[ $i -gt 5 ]]; do
+    echo $i
+    ((i++))
+done
+#+end_src
+
+select Loop(Menu loop)
+Useful for menus
+#+begin_src shell :run t
+select opt in start stop exit
+do
+    echo "You chose $opt"
+    break
+done
+#+end_src
+
+
+Arrays in Bash
+Bash me mainly:
+1. Indexed arrays (normal arrays)
+2. Associative arrays (key-value)
+   
+#+begin_src shell :run t
+arr=(apple banana mango)
+
+echo $arr
+echo ${arr[@]}
+
+echo ${arr[0]}
+echo ${arr[1]}
+
+echo "Length = ${#arr[@]}"
+echo "Length of first elem = ${#arr[0]}"
+#+end_src
+
+Array Operations
+#+begin_src shell :run t
+arr=(apple banana mango)
+
+# Adding Elements
+arr+=("grape")
+echo ${arr[@]}
+
+arr[4]="orange"
+echo ${arr[@]}
+
+# Modify
+arr[1]="kiwi"
+echo ${arr[@]}
+
+# Delete element
+unset arr[1]
+echo ${arr[@]}
+
+unset arr    # delete full array
+echo $arr
+#+end_src
+
+Looping / Slicing array
+#+begin_src shell :run t
+arr=(apple mango banana)
+
+for item in ${arr[@]}; do
+    echo $item
+done
+
+# Using index
+for i in ${!arr[@]}; do
+    echo "Index $i = ${arr[$i]}"
+done
+
+# Slicing Arrays
+# start at index 1 and take 2 elements
+echo ${arr[@]:1:2}
+#+end_src
+
+
+#+begin_src shell
+read -a arr
+echo ${arr[@]}
+
+mapfile -t arr < /etc/passwd
+echo ${arr[0]}
+#+end_src
+
+Associative Arrays (Dictionary)
+Bash 4+ required
+
+#+begin_src shell
+declare -A dict
+
+dict[name]="Alice"
+dict[age]=25
+
+echo ${dict[name]}
+echo ${!dict[@]}    # All Keys
+echo ${dict[@]}     # All values
+
+for n in ${dict[@]}; do
+    
+#+end_src
